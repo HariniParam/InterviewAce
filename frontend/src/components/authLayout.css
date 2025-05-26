@@ -1,0 +1,121 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+.auth-container {
+  display: flex;
+  height: 100vh;
+  font-family: 'Inter', sans-serif;
+  background-color: #F1EFEC;
+}
+
+.auth-left {
+  flex: 1;
+  background-color: #030303;
+  color: #F1EFEC;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+
+.project-title {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  color: #D4C9BE;
+}
+
+.illustration-text {
+  font-size: 2rem;
+  color: #D4C9BE;
+  text-align: center;
+  max-width: 600px;
+}
+
+.project-logo {
+  width: 500px;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  object-fit: contain;
+}
+
+.auth-right {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #D4C9BE;
+}
+
+.auth-box {
+  background-color: #D4C9BE;
+  padding: 2rem;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 4px 20px #030303;
+}
+
+.auth-box h2 {
+  color: #123458;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+input {
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 1rem;
+  border: none;
+}
+
+.password-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-container input {
+  width: 100%;
+  padding-right: 2.5rem;
+}
+
+.toggle-icon {
+  position: absolute;
+  right: 10px;
+  cursor: pointer;
+  color: #555;
+}
+
+button {
+  padding: 10px;
+  background-color: #123458;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #030303;
+}
+
+.message {
+  padding: 10px;
+  border-radius: 5px;
+  text-align: center;
+  border: 1px solid;
+}
+
+.message.success {
+  color: #155724;
+  background-color: #d4edda;
+  border-color: #c3e6cb;
+}
+
+.message.error {
+  color: #721c24;
+  background-color: #f8d7da;
+  border-color: #f5c6cb;
+}
+
