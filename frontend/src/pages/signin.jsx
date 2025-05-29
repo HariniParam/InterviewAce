@@ -19,11 +19,15 @@ const Signin = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await API.post('/signin', form);
+      const res = await API.post('/auth/signin', form);
       localStorage.setItem('token', res.data.token);
       setMessageType('success');
       setMessage('Signin successful! Redirecting...');
-      setTimeout(() => navigate('/dashboard'), 1500);
+      // to check whether profile is updated before working with the app
+      const profile = await API.get('/profile');
+      setTimeout(() => navigate(profile.data.profileCompleted ? '/dashboard' : '/profile', 
+        {state: { profileUpdate: !profile.data.profileCompleted }})
+      , 1500);
     } catch (err) {
       setMessageType('error');
       setMessage(err.response?.data?.message || 'Signin failed');

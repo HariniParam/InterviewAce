@@ -1,0 +1,90 @@
+.card {
+  background: #F1EFEC;
+  border-radius: 16px;
+  padding: 20px;
+  width: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 220px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  border: 1px solid #D4C9BE;
+  transition: transform 0.2s ease;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+}
+
+@keyframes fadeIn {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card h4 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #123458;
+  font-weight: 600;
+}
+
+.card-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 0.3rem;
+}
+
+.card span {
+  font-size: 0.9rem;
+  color: #030303;
+}
+
+.card span strong {
+  color: #123458;
+}
+
+.button-container {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+}
+
+.card button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.card .attend {
+  background: #123458;
+  color: white;
+}
+
+.card .attend:hover {
+  background: #0e2d44;
+  transform: translateY(-1px);
+}
+
+.card .delete {
+  background: #D4C9BE;
+  color: #030303;
+}
+
+.card .delete:hover {
+  background: #c1b5a9;
+  transform: translateY(-1px);
+}

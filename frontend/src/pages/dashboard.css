@@ -1,0 +1,131 @@
+.dashboard-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  font-family: 'Inter', sans-serif;
+  overflow: hidden;
+}
+
+.dashboard-content {
+  flex: 1;
+  display: flex;
+  padding: 1rem;
+  gap: 1rem;
+  background-color: #030303;
+  overflow: hidden;
+}
+
+.left-panel {
+  flex: 1;
+  background: #F1EFEC;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+}
+
+.greeting {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.greeting h2 {
+  font-size: 1.5rem;
+  color: #123458;
+}
+
+.interview-box {
+  height: 300px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border: 2px dashed #123458;
+  border-radius: 12px;
+  padding: 1rem;
+  text-align: center;
+}
+
+.interview-box h3 {
+  margin-bottom: 1rem;
+}
+
+.interview-box button {
+  background-color: #123458;
+  color: white;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.interview-box button:hover {
+  background-color: #0f2e48;
+}
+
+.right-panel {
+  flex: 2;
+  background: #123458;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.filters {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding-bottom: 1rem;
+}
+
+.filters input,
+.filters select {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  width: 100%;
+  max-width: 300px;
+}
+
+.cards-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 0.5rem 0rem;
+  overflow-y: auto;
+  max-height: 550px;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.cards-wrapper::-webkit-scrollbar {
+  width: 8px;
+}
+
+.cards-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.cards-wrapper::-webkit-scrollbar-thumb {
+  background: transparent;
+}
+
+
+.create-btn {
+  padding: 0.5rem 1rem;
+  background-color: #D4C9BE;
+  color: #123458;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.create-btn:hover {
+  background-color: #F1EFEC;
+}
+
