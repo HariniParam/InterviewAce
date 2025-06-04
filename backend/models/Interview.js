@@ -11,10 +11,10 @@ const interviewSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
-  answers: [
+  sessions: [
     {
-      question: String,
-      answer: String
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'InterviewSession'
     }
   ]
 });

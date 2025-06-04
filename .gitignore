@@ -5,6 +5,7 @@ backend/node_modules/
 backend/.env
 backend/temp/
 backend/dist/
+backend/uploads/
 
 frontend/node_modules/
 frontend/.pnp
