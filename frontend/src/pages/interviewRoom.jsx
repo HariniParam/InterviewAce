@@ -11,6 +11,7 @@ const InterviewRoom = () => {
   const previewVideoRef = useRef(null);
   const liveVideoRef = useRef(null);
   const recognitionRef = useRef(null);
+  const lastSpokenIndexRef = useRef(-1);
 
   const [isStarted, setIsStarted] = useState(false);
   const [isQuestionsLoading, setIsQuestionsLoading] = useState(false);
@@ -36,6 +37,7 @@ const InterviewRoom = () => {
   // to track if question has been spoken
   const [questionSpoken, setQuestionSpoken] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isQuestionPending, setIsQuestionPending] = useState(false); // New state
   const questions = questionsWithAnswers.map(item => item.question);
 
   // Initialize webcam
@@ -147,9 +149,8 @@ const InterviewRoom = () => {
   }, [id]);
 
   useEffect(() => {
-    setQuestionSpoken(false);
-    setAnswer('');
-  }, [currentQIndex]);
+    setAnswer(qna[currentQIndex]?.answer || '');
+  }, [currentQIndex, qna]);
 
   useEffect(() => {
     if (
@@ -158,7 +159,9 @@ const InterviewRoom = () => {
       questions.length > 0 &&
       currentQIndex < questions.length &&
       !questionSpoken &&
-      !isSpeaking
+      !isSpeaking &&
+      !isQuestionPending &&
+      lastSpokenIndexRef.current !== currentQIndex
     ) {
       if (recognitionRef.current && isListening) {
         recognitionRef.current.stop();
@@ -180,16 +183,18 @@ const InterviewRoom = () => {
       utterance.onend = () => {
         setIsSpeaking(false);
         setQuestionSpoken(true);
+        lastSpokenIndexRef.current = currentQIndex;
       };
 
-      utterance.onerror = () => {
+      utterance.onerror = (event) => {
         setIsSpeaking(false);
         setQuestionSpoken(true);
+        lastSpokenIndexRef.current = currentQIndex;
       };
 
       speechSynthesis.speak(utterance);
     }
-  }, [questions, currentQIndex, questionsReady, interview, questionSpoken, isSpeaking]);
+  }, [questions, currentQIndex, questionsReady, interview, questionSpoken, isSpeaking, isQuestionPending]);
 
   const generateInterviewQuestions = async () => {
     if (!interview) return;
@@ -203,7 +208,14 @@ const InterviewRoom = () => {
         mode: interview.mode,
       });
       
-      setQuestionsWithAnswers(response.data.questionsWithAnswers);
+      const newQuestionsWithAnswers = response.data.questionsWithAnswers;
+      setQuestionsWithAnswers(newQuestionsWithAnswers);
+      const initialQna = newQuestionsWithAnswers.map(item => ({
+        question: item.question,
+        answer: '',
+        correctAnswer: item.correctAnswer || ''
+      }));
+      setQna(initialQna);
       setQuestionsReady(true);
       setMessage('Questions loaded successfully!');
       setMessageType('success');
@@ -219,6 +231,8 @@ const InterviewRoom = () => {
 
   const generateFollowUpQuestion = async (previousQuestion, previousAnswer) => {
     setIsQuestionsLoading(true);
+    setIsQuestionPending(true);
+
     try {
       const response = await API.post(`/interview/${id}/questions`, {
         jobRole: interview.role,
@@ -231,23 +245,31 @@ const InterviewRoom = () => {
       
       const newQuestionWithAnswer = response.data.questionsWithAnswers[0];
       
-      const newQuestionsWithAnswers = [
-        ...questionsWithAnswers.slice(0, currentQIndex + 1),
+      setQuestionsWithAnswers(prev => [
+        ...prev.slice(0, currentQIndex + 1),
         newQuestionWithAnswer,
-        ...questionsWithAnswers.slice(currentQIndex + 1)
-      ];
+        ...prev.slice(currentQIndex + 1)
+      ]);
       
-      setQuestionsWithAnswers(newQuestionsWithAnswers);
+      setQna(prev => [
+        ...prev.slice(0, currentQIndex + 1),
+        { question: newQuestionWithAnswer.question, answer: '', correctAnswer: newQuestionWithAnswer.correctAnswer || '' },
+        ...prev.slice(currentQIndex + 1)
+      ]);
+      
       setCurrentQIndex(currentQIndex + 1);
       setAnswer('');
+      setQuestionSpoken(false);
+      setFollowUpCount(followUpCount + 1);
       setMessage('Follow-up question generated!');
       setMessageType('success');
-      setFollowUpCount(followUpCount + 1);
+      
     } catch (error) {
       setMessage('Failed to generate follow-up question');
       setMessageType('error');
     } finally {
       setIsQuestionsLoading(false);
+      setIsQuestionPending(false); 
     }
   };
 
@@ -370,26 +392,34 @@ const InterviewRoom = () => {
       }
       speechSynthesis.cancel();
 
-      const newQna = [...qna, { 
+      const newQna = [...qna];
+      newQna[currentQIndex] = { 
         question: questions[currentQIndex], 
         answer,
         correctAnswer: questionsWithAnswers[currentQIndex]?.correctAnswer || ''
-      }];
+      };
       setQna(newQna);
 
       setAnswer('');
 
       if (currentQIndex === 0 || (currentQIndex > 0 && followUpCount < targetFollowUps)) {
-        await generateFollowUpQuestion(questions[currentQIndex], answer);
+        if (!isSpeaking && !isQuestionPending) {
+          await generateFollowUpQuestion(questions[currentQIndex], answer);
+        } else {
+          setMessage('Please wait for the question to finish speaking or loading.');
+          setMessageType('error');
+        }
         return;
       }
 
+      setQuestionSpoken(false);
       if (currentQIndex < questions.length - 1) {
         setCurrentQIndex(currentQIndex + 1);
+        setAnswer(newQna[currentQIndex + 1]?.answer || '');
       } else {
         setCurrentQIndex(questions.length);
+        setAnswer('');
       }
-
     } else if (interview?.mode === 'Written') {
       if (answer.trim() === '') {
         setMessage('Please enter an answer before proceeding.');
@@ -425,8 +455,11 @@ const InterviewRoom = () => {
       };
       setQna(newQna);
 
-      setCurrentQIndex(currentQIndex - 1);
-      setAnswer(newQna[currentQIndex - 1]?.answer || '');
+      const prevIndex = currentQIndex - 1;
+      setCurrentQIndex(prevIndex);
+      const prevAnswer = newQna[prevIndex]?.answer || '';
+      setAnswer(prevAnswer);
+      console.log('Prev: Loaded answer:', prevAnswer, 'for question index:', prevIndex);
     }
   };
 

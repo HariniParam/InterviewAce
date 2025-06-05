@@ -2,6 +2,7 @@ require('dotenv').config();
 const Interview = require('../models/Interview');
 const InterviewSession = require('../models/InterviewSession');
 const OpenAI = require('openai');
+const axios = require('axios');
 const { writtenPrompt, oneToOneFollowUpPrompt, oneToOneInitialPrompt } = require('../prompts/interviewPrompt');
 
 // Initialize OpenAI client
@@ -82,14 +83,44 @@ const addInterviewSession = async (req, res) => {
   try {
     const { id } = req.params;
     const { qna, duration, videoUrl } = req.body;
-
     const interview = await Interview.findOne({ _id: id, user: req.user.id });
     if (!interview) {
       return res.status(404).json({ error: 'Interview not found or unauthorized' });
     }
 
+    // Calculate similarity scores for each Q&A pair
+    const qnaWithScores = await Promise.all(
+      qna.map(async (item) => {
+        if (!item.question || !item.answer || !item.correctAnswer) {
+          return {
+            ...item,
+            similarityScore: null,
+          };
+        }
+
+        try {
+          //const score = await calculateSimilarityScore(item.answer, item.correctAnswer);
+          const score = await calculateSimilarityScore(
+            item.answer, 
+            item.correctAnswer, 
+            item.question
+          );
+          return {
+            ...item,
+            similarityScore: score,
+          };
+        } catch (error) {
+          console.error('Similarity calculation error:', error.message);
+          return {
+            ...item,
+            similarityScore: null,
+          };
+        }
+      })
+    );
+
     const session = new InterviewSession({
-      qna,
+      qna: qnaWithScores,
       duration,
       videoUrl
     });
@@ -250,7 +281,7 @@ const generateQuestions = async (req, res) => {
     });
 
     const responseText = response.choices[0].message.content;
-    console.log("RESPONSE : ", responseText)
+    // console.log("RESPONSE : ", responseText)
     const questionsWithAnswers = parseStructuredQA(responseText, mode, isFollowUp);
     
     if (questionsWithAnswers.length === 0) {
@@ -282,6 +313,145 @@ const generateQuestions = async (req, res) => {
       error: 'Failed to generate questions',
       details: err.message 
     });
+  }
+};
+
+// Helper function to extract option from MCQ answers
+const extractMCQOption = (text) => {
+  if (!text || typeof text !== 'string') return null;
+  
+  const cleanText = text.trim().toUpperCase();
+  
+  // Look for patterns like "A)", "A.", "A", "OPTION A", etc.
+  const optionPatterns = [
+    /^([ABCD])\)/,           // A), B), C), D)
+    /^([ABCD])\./,           // A., B., C., D.
+    /^([ABCD])$/,            // Just A, B, C, D
+    /^OPTION\s*([ABCD])/,    // OPTION A, OPTION B, etc.
+    /^ANSWER\s*([ABCD])/,    // ANSWER A, ANSWER B, etc.
+    /^([ABCD])\s*[-:]/,      // A-, A:, etc.
+    /CORRECT\s*ANSWER:?\s*([ABCD])/i, // Correct answer: A
+    /^.*?([ABCD])(?:\s|$)/   // Any A, B, C, D followed by space or end
+  ];
+  
+  for (const pattern of optionPatterns) {
+    const match = cleanText.match(pattern);
+    if (match && match[1]) {
+      return match[1];
+    }
+  }
+  
+  return null;
+};
+
+// Helper function to check if question is MCQ
+const isMCQQuestion = (question) => {
+  if (!question || typeof question !== 'string') return false;
+  
+  // Check for typical MCQ patterns
+  const mcqPatterns = [
+    /\n\s*[ABCD]\)/,  // A), B), C), D) on new lines
+    /\([ABCD]\)/,     // (A), (B), (C), (D)
+    /[ABCD]\.\s/,     // A. B. C. D. with space
+    /[ABCD]\)\s/      // A) B) C) D) with space
+  ];
+  
+  return mcqPatterns.some(pattern => pattern.test(question));
+};
+
+// similarity calculation function
+const calculateSimilarityScore = async (userAnswer, correctAnswer, question = '') => {
+  try {
+    // Input validation
+    if (!userAnswer || !correctAnswer || typeof userAnswer !== 'string' || typeof correctAnswer !== 'string') {
+      console.error('Invalid input for similarity calculation');
+      return 0;
+    }
+
+    // Check if this is an MCQ question
+    if (isMCQQuestion(question)) {
+      
+      const userOption = extractMCQOption(userAnswer);
+      const correctOption = extractMCQOption(correctAnswer);
+      
+      if (userOption && correctOption) {
+        // Direct option comparison - exact match = 100, no match = 0
+        const score = userOption === correctOption ? 100 : 0;
+        return score;
+      } else {
+        console.warn('Could not extract options from MCQ answers');
+        const cleanUser = userAnswer.trim().toUpperCase();
+        const cleanCorrect = correctAnswer.trim().toUpperCase();
+        
+        for (const option of ['A', 'B', 'C', 'D']) {
+          if (cleanUser.includes(option) && cleanCorrect.includes(option)) {
+            return 100;
+          }
+        }
+        return 0;
+      }
+    }
+
+    // For non-MCQ questions, use semantic similarity
+    
+    const response = await axios.post(
+      'https://api-inference.huggingface.co/models/sentence-transformers/all-MiniLM-L6-v2',
+      { 
+        inputs: {
+          source_sentence: userAnswer.trim(),
+          sentences: [correctAnswer.trim()]
+        },
+        options: { wait_for_model: true }
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.HF_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        timeout: 30000
+      }
+    );
+    
+    const similarity = response.data[0];
+    const score = Math.max(0, Math.min(100, Math.round(similarity * 100)));
+    return score;
+    
+  } catch (error) {
+    console.error('Similarity calculation error:', {
+      message: error.message,
+      response: error.response?.data
+    });
+    return fallbackSimilarity(userAnswer, correctAnswer);
+  }
+};
+
+// Fallback similarity function
+const fallbackSimilarity = (answer1, answer2) => {
+  try {
+    const clean1 = answer1.trim().toLowerCase();
+    const clean2 = answer2.trim().toLowerCase();
+    
+    // Exact match
+    if (clean1 === clean2) return 100;
+    
+    // For very short answers (likely single characters/options)
+    if (clean1.length <= 3 && clean2.length <= 3) {
+      return clean1 === clean2 ? 100 : 0;
+    }
+    
+    // Word overlap similarity
+    const words1 = new Set(clean1.split(/\s+/));
+    const words2 = new Set(clean2.split(/\s+/));
+    
+    const intersection = new Set([...words1].filter(x => words2.has(x)));
+    const union = new Set([...words1, ...words2]);
+    
+    const similarity = intersection.size / union.size;
+    return Math.round(similarity * 100);
+    
+  } catch (error) {
+    console.error('Fallback similarity error:', error);
+    return 0;
   }
 };
 

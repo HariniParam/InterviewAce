@@ -66,9 +66,17 @@ const SessionDetails = () => {
     return `${minutes}m ${remainingSeconds}s`;
   };
 
-  const isCorrect = (answer, correctAnswer) => {
-    if (!answer || !correctAnswer) return false;
-    return answer.toLowerCase().trim() === correctAnswer.toLowerCase().trim();
+  const isCorrect = (qnaItem) => {
+    const { similarityScore, questionType } = qnaItem;
+    // Handle null or undefined similarityScore
+    if (similarityScore == null) return false;
+
+    // Check if question is MCQ
+    if (questionType === 'MCQ') {
+      return similarityScore === 100;
+    }
+    // For non-MCQ questions, use 75% threshold
+    return similarityScore >= 75;
   };
 
   const handleNextQuestion = () => {
@@ -154,11 +162,11 @@ const SessionDetails = () => {
             <div className="question-nav">
               <h2>Question {currentQuestionIndex + 1} of {totalQuestions}</h2>
               <div className="question-indicators">
-                {session.qna.map((_, index) => (
+                {session.qna.map((qnaItem, index) => (
                   <button
                     key={index}
                     className={`question-dot ${index === currentQuestionIndex ? 'active' : ''} ${
-                      isCorrect(session.qna[index].answer, session.qna[index].correctAnswer) ? 'correct' : 'incorrect'
+                      isCorrect(qnaItem) ? 'correct' : 'incorrect'
                     }`}
                     onClick={() => goToQuestion(index)}
                     title={`Question ${index + 1}`}
@@ -213,8 +221,8 @@ const SessionDetails = () => {
                       ? `${currentQuestion.similarityScore}%`
                       : 'N/A'}
                   </p>
-                  <span className={`status ${isCorrect(currentQuestion.answer, currentQuestion.correctAnswer) ? 'correct' : 'incorrect'}`}>
-                    {isCorrect(currentQuestion.answer, currentQuestion.correctAnswer) ? 'Correct' : 'Incorrect'}
+                  <span className={`status ${isCorrect(currentQuestion) ? 'correct' : 'incorrect'}`}>
+                    {isCorrect(currentQuestion) ? 'Correct' : 'Incorrect'}
                   </span>
                 </div>
 
