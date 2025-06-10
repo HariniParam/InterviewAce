@@ -6,6 +6,7 @@ import Profile from './pages/profile'
 import InterviewRoom from './pages/interviewRoom';
 import History from './pages/history';
 import SessionDetails from './pages/sessionDetails';
+import SessionAnalysis from './pages/sessionAnalysis';
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
         <Route path="/interview/:id" element={<InterviewRoom />} />
         <Route path="/history" element={<History/>} />
         <Route path="/history/:id" element={<SessionDetails/>} />
+        <Route path="/history/:id/analysis" element={<SessionAnalysis/>} />
       </Routes>
     </Router>
   );
