@@ -4,11 +4,12 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import './profile.css';
 import Header from '../components/header';
 import { FaTimes } from 'react-icons/fa';
+import skillsData from '../data/skills.json';
 
 const Profile = () => {
   const [form, setForm] = useState({
     name: '',
-    skills: '',
+    skills: [],
     experience: '',
     careerGoals: '',
   });
@@ -32,7 +33,7 @@ const Profile = () => {
         setUser(user);
         setForm({
           name: user.name || '',
-          skills: user.skills?.join(', ') || '',
+          skills: user.skills || [],
           experience: user.experience || '',
           careerGoals: user.careerGoals || '',
         });
@@ -49,7 +50,15 @@ const Profile = () => {
     fetchProfile();
   }, [navigate]);
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    if (name === 'skills') {
+      const selectedOptions = Array.from(e.target.selectedOptions).map(option => option.value);
+      setForm({ ...form, skills: selectedOptions });
+    } else {
+      setForm({ ...form, [name]: value });
+    }
+  };
 
   const handleResumeChange = (e) => {
     const file = e.target.files[0];
@@ -67,7 +76,7 @@ const Profile = () => {
     e.preventDefault();
     if (
       !form.name.trim() ||
-      !form.skills.trim() ||
+      form.skills.length === 0 ||
       !form.experience.trim() ||
       !form.careerGoals.trim() ||
       (!resume && !resumeName) ||
@@ -78,7 +87,7 @@ const Profile = () => {
     }
     const data = new FormData();
     data.append('name', form.name);
-    data.append('skills', form.skills);
+    data.append('skills', form.skills.join(','));
     data.append('experience', form.experience);
     data.append('careerGoals', form.careerGoals);
     if (resume) data.append('resume', resume);
@@ -98,7 +107,6 @@ const Profile = () => {
     }
   };
 
-  // Function to close the pop-up
   const handleClosePopup = () => {
     setShowPopup(false);
   };
@@ -119,7 +127,6 @@ const Profile = () => {
       <div className="profile-page">
         <h2 className="profile-heading">Complete Your Profile</h2>
 
-        {/* Pop-up message shown for profile updation */}
         {profileUpdate && showPopup && (
           <div className="profile-popup-overlay">
             <div className="profile-popup">
@@ -150,20 +157,25 @@ const Profile = () => {
                 className="profile-input"
               />
 
-              <label className="profile-label">Skill</label>
+              <label className="profile-label">Skills</label>
               <select
                 name="skills"
                 value={form.skills}
                 onChange={handleChange}
                 className="profile-select"
+                multiple
+                size="5"
               >
-                <option value="">Select your skill</option>
-                <option value="JavaScript">JavaScript</option>
-                <option value="React">React</option>
-                <option value="Node.js">Node.js</option>
-                <option value="MongoDB">MongoDB</option>
-                <option value="Python">Python</option>
+                {skillsData.slice(0, 50).map(skill => (
+                  <option key={skill} value={skill}>
+                    {skill}
+                  </option>
+                ))}
               </select>
+              <p className="skills-help-text">Hold Ctrl (Cmd on Mac) to select multiple skills</p>
+              <div className="selected-skills">
+                <strong>Selected Skills:</strong> {form.skills.length > 0 ? form.skills.join(', ') : 'None'}
+              </div>
 
               <label className="profile-label">Years of Experience</label>
               <select
@@ -172,25 +184,23 @@ const Profile = () => {
                 onChange={handleChange}
                 className="profile-select"
               >
-                <option value="">Years of Experience</option>
                 <option value="0">0</option>
                 <option value="1">1</option>
                 <option value="2">2</option>
                 <option value="3+">3+</option>
               </select>
+            </div>
 
+            <div className="profile-right">
               <label className="profile-label">Career Goals</label>
               <textarea
                 name="careerGoals"
                 value={form.careerGoals}
                 onChange={handleChange}
-                placeholder="E.g., Become a full-stack developer, master system design, etc."
+                placeholder="E.g.,full-stack developer/system designer..."
                 className="profile-textarea"
-                rows={3}
+                rows={1}
               />
-            </div>
-
-            <div className="profile-right">
               <label className="profile-label">Upload Profile Image</label>
               <div className="custom-file-input">
                 <input
@@ -212,6 +222,7 @@ const Profile = () => {
               <div className="custom-file-input">
                 <input
                   type="file"
+                  accept=".pdf"
                   onChange={handleResumeChange}
                   className="hidden-file-input"
                   id="resumeInput"

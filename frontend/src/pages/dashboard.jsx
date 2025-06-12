@@ -12,6 +12,7 @@ const Dashboard = () => {
   const [search, setSearch] = useState('');
   const [filterMode, setFilterMode] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [isProfileBased, setIsProfileBased] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -44,21 +45,33 @@ const Dashboard = () => {
   }, []);
 
   const handleStartInterview = () => {
-    navigate('/interview');
+    if (!user) {
+      alert('Please complete your profile to start a profile-based interview.');
+      navigate('/profile');
+      return;
+    }
+    console.log("User details : ", user)
+    setIsProfileBased(true);
+    setShowModal(true);
   };
 
   const handleCreateInterviewClick = () => {
+    setIsProfileBased(false);
     setShowModal(true);
   };
 
   const handleCreateInterview = async (formData) => {
     try {
-      const res = await API.post('/interview', formData);
+      const res = await API.post('/interview',  { ...formData, isProfileBased });
       setInterviews((prev) => [...prev, res.data]);
       setShowModal(false);
+      if (isProfileBased) {
+        navigate(`/interview/${res.data._id}`);
+        return { success: true };
+      }
     } catch (err) {
       const msg = err?.response?.data?.error || 'Failed to create interview';
-      throw new Error(msg);
+      return { success: false, error: msg };
     }
   };
 
@@ -130,6 +143,8 @@ const Dashboard = () => {
         <CreateInterview
           onClose={() => setShowModal(false)}
           onCreate={handleCreateInterview}
+          isProfileBased={isProfileBased}
+          userProfile={user}
         />
       )}
     </div>

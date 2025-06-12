@@ -14,6 +14,9 @@ const getAllSessions = async (req, res) => {
         jobType: interview.jobType,
         experience: interview.experience,
         mode: interview.mode,
+        skills: interview.skills,
+        resume: interview.resume,
+        isProfileBased: interview.isProfileBased,
         createdAt: session.createdAt
       }))
     );
@@ -43,7 +46,10 @@ const getSessionById = async (req, res) => {
       role: interview.role,
       jobType: interview.jobType,
       experience: interview.experience,
-      mode: interview.mode
+      mode: interview.mode,
+      skills: interview.skills,
+      resume: interview.resume,
+      isProfileBased: interview.isProfileBased,
     });
   } catch (err) {
     console.error(err);

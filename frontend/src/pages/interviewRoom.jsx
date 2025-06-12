@@ -206,6 +206,9 @@ const InterviewRoom = () => {
         experience: interview.experience,
         jobType: interview.jobType,
         mode: interview.mode,
+        skills: interview.skills,
+        resume: interview.resume,
+        isProfileBased: interview.isProfileBased
       });
       
       const newQuestionsWithAnswers = response.data.questionsWithAnswers;
@@ -239,6 +242,9 @@ const InterviewRoom = () => {
         experience: interview.experience,
         jobType: interview.jobType,
         mode: interview.mode,
+        skills: interview.skills,
+        resume: interview.resume,
+        isProfileBased: interview.isProfileBased,
         previousQuestion,
         previousAnswer,
       });

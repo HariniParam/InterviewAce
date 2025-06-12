@@ -19,6 +19,7 @@ const History = () => {
     mode: '',
     dateRange: '',
   });
+  const BASE_URL = 'http://localhost:5000';
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -269,6 +270,9 @@ const History = () => {
                   <div className="session-role">
                     <h3>{session.role}</h3>
                     <span className="job-type">{session.jobType}</span>
+                    <span className={`profile-badge ${session.isProfileBased ? 'profile-based' : 'custom'}`}>
+                      {session.isProfileBased ? 'Profile-Based' : 'Custom'}
+                    </span>
                   </div>
                   <div className="session-date">
                     {formatDate(session.createdAt)}
@@ -291,6 +295,30 @@ const History = () => {
                   <div className="detail-item">
                     <span className="label">Questions:</span>
                     <span className="value">{session.qna?.length || 0} questions</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="label">Skills:</span>
+                    <span className="value skills-value">
+                      {session.skills?.length > 0 ? session.skills.join(', ') : 'None'}
+                    </span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="label">Resume:</span>
+                    <span className="value">
+                      {session.resume ? (
+                        <a
+                          href={`${BASE_URL}${session.resume}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="resume-link"
+                          download={session.resume.split('/').pop()}
+                        >
+                          Download Resume
+                        </a>
+                      ) : (
+                        'None'
+                      )}
+                    </span>
                   </div>
                 </div>
 

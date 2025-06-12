@@ -39,7 +39,7 @@ QA_PAIR_SEPARATOR
 
 Do not include any introductory text or headers. Begin generating now:`,
 
-  oneToOneInitialPrompt: ({ jobRole, experience, jobType }) => `
+  oneToOneInitialPrompt: ({ jobRole, experience, jobType, skills, resume, isProfileBased }) => `
 Generate interview questions and answer templates for a ${jobType} ${jobRole} position with ${experience} experience level.
 
 IMPORTANT FORMATTING REQUIREMENTS:
@@ -52,10 +52,21 @@ ANSWER: [Answer template with key points, structure, and guidance]
 QA_PAIR_SEPARATOR
 
 CONTENT REQUIREMENTS:
-- Focus on behavioral, technical, and experience-based questions
-- Answer templates should guide candidates on what to include
-- Include key points, structure, technical concepts, and examples to mention
-- Make templates comprehensive yet flexible
+${isProfileBased && resume && skills?.length > 0 ? `
+- This is a profile-based interview. Prioritize questions based on the candidate's resume and skills:
+  - 80% of questions (8 out of 10) must directly relate to:
+    - Resume content: ${resume.substring(0, 5000)}...
+    - Skills: ${skills.join(', ')}
+  - 20% of questions (2 out of 10) should be based on the job role (${jobRole}), experience (${experience} years), and job type (${jobType})
+  - Technical questions should focus on listed skills (e.g., specific frameworks or tools mentioned)
+  - Behavioral and experience-based questions should tie to experiences or projects implied in the resume
+` : `
+- Focus on behavioral, technical, and experience-based questions based on the job role (${jobRole}), experience (${experience} years), and job type (${jobType})
+`}
+- Include a mix of behavioral, technical, and experience-based questions
+- Answer templates should guide candidates on what to include, with key points, structure, technical concepts, and examples
+- Make templates comprehensive yet flexible, encouraging detailed responses
+- Ensure questions are relevant to the candidate’s expertise level and role
 
 Begin generating now:`
 };

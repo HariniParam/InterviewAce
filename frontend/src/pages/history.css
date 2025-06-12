@@ -221,12 +221,21 @@
   margin-bottom: 1.5rem;
 }
 
+.session-role {
+  width: 15rem;
+}
 .session-role h3 {
   color: #F1EFEC;
   font-size: 1.3rem;
   margin: 0 0 0.5rem 0;
   font-weight: 600;
   max-width: 11rem;
+}
+
+.badges {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .job-type {
@@ -236,6 +245,24 @@
   border-radius: 20px;
   font-size: 0.85rem;
   font-weight: 500;
+}
+
+.profile-badge {
+  padding: 4px 12px;
+  margin-left: 4px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.profile-badge.profile-based {
+  background-color: #4CAF50;
+  color: #F1EFEC;
+}
+
+.profile-badge.custom {
+  background-color: #0288D1;
+  color: #F1EFEC;
 }
 
 .session-date {
@@ -251,7 +278,7 @@
 .detail-item {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 0.8rem;
   padding-bottom: 0.5rem;
   border-bottom: 1px solid rgba(212, 201, 190, 0.1);
@@ -272,6 +299,25 @@
   color: #F1EFEC;
   font-weight: 600;
   text-align: right;
+  max-width: 50%;
+}
+
+.skills-value {
+  text-align: right;
+  word-break: break-word;
+  white-space: normal;
+}
+
+.resume-link {
+  color: #D4C9BE;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+.resume-link:hover {
+  color: #F1EFEC;
+  text-decoration: underline;
 }
 
 .session-actions {

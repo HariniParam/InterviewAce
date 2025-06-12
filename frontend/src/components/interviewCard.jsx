@@ -20,7 +20,12 @@ const InterviewCard = ({ interview, onDelete }) => {
 
   return (
     <div className="card" key={interview._id}>
-      <h4>{interview.role}</h4>
+      <div className="card-header">
+        <h4>{interview.role}</h4>
+        <span className={`profile-badge ${interview.isProfileBased ? 'profile-based' : 'custom'}`}>
+          {interview.isProfileBased ? 'Profile-Based' : 'Custom'}
+        </span>
+      </div>
       <div className="card-details">
         <span><strong>Experience:</strong> {interview.experience} yrs</span>
         <span><strong>Type:</strong> {interview.jobType}</span>

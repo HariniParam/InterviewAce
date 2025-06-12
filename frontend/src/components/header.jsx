@@ -47,13 +47,6 @@ const Header = ({ user }) => {
           >
             History
           </button>
-          <button
-            className={isActive('/analytics') ? 'active' : ''}
-            onClick={() => navigate('/analytics')}
-            disabled={!profileCompleted}
-          >
-            Analytics
-          </button>
         </nav>
       </div>
       <div className="header-right">

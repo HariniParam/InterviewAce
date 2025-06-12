@@ -1,6 +1,6 @@
 .modal-backdrop {
   position: fixed;
-  top: 0;
+  top: 4rem;
   left: 0;
   right: 0;
   bottom: 0;
@@ -14,7 +14,7 @@
 .modal {
   background: #F1EFEC;
   border-radius: 16px;
-  padding: 30px 40px;
+  padding: 1rem 2rem;
   width: 420px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
   display: flex;
@@ -39,7 +39,7 @@
 .modal form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
 .modal .form-group {

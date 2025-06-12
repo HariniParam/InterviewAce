@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from '../components/header';
 import API from '../api';
+import jsPDF from 'jspdf';
 import './sessionDetails.css';
 
 const SessionDetails = () => {
@@ -75,7 +76,7 @@ const SessionDetails = () => {
     if (questionType === 'MCQ') {
       return similarityScore === 100;
     }
-    // For non-MCQ questions, use 75% threshold
+    // For non-MCQ questions, using 75% threshold
     return similarityScore >= 75;
   };
 
@@ -93,6 +94,79 @@ const SessionDetails = () => {
 
   const goToQuestion = (index) => {
     setCurrentQuestionIndex(index);
+  };
+
+  const handleDownload = () => {
+    if (!session) return;
+
+    const doc = new jsPDF();
+    let yPos = 20;
+    const leftMargin = 15;
+    const maxWidth = 180;
+    const lineHeight = 10;
+
+    // Helper function to add text with wrapping and page break check
+    const addText = (text, x, y, fontSize, style = 'normal', maxY = 270) => {
+      doc.setFontSize(fontSize);
+      doc.setFont('helvetica', style);
+      const lines = doc.splitTextToSize(text, maxWidth);
+      lines.forEach((line) => {
+        if (y > maxY) {
+          doc.addPage();
+          y = 20;
+        }
+        doc.text(line, x, y);
+        y += lineHeight * 0.8;
+      });
+      return y;
+    };
+
+    // Title
+    yPos = addText('Session Details', leftMargin, yPos, 16, 'bold');
+
+    // Session Metadata
+    yPos = addText('---------------', leftMargin, yPos, 12);
+    const sessionDetails = [
+      `Role: ${session.role || 'N/A'}`,
+      `Job Type: ${session.jobType || 'N/A'}`,
+      `Name: ${session.name || 'N/A'}`,
+      `Date: ${formatDate(session.createdAt) || 'N/A'}`,
+      `Experience: ${session.experience} ${session.experience === 1 ? 'Year' : 'Years'}`,
+      `Skills: ${session.skills || 'N/A'}`,
+      `Mode: ${session.mode || 'N/A'}`,
+      `Duration: ${formatDuration(session.duration || 0)}`,
+      `Total Questions: ${session.qna?.length || 0}`,
+    ];
+    sessionDetails.forEach((detail) => {
+      yPos = addText(detail, leftMargin, yPos, 12);
+    });
+
+    // QnA Section
+    yPos = addText('\nQnA Details', leftMargin, yPos, 16, 'bold');
+    yPos = addText('---------------', leftMargin, yPos, 12);
+
+    if (session.qna?.length) {
+      session.qna.forEach((qnaItem, index) => {
+        const qnaText = [
+          `Question ${index + 1}`,
+          `Question: ${qnaItem.question || 'N/A'}`,
+          `Your Answer: ${qnaItem.answer || 'No answer provided'}`,
+          `Correct Answer: ${qnaItem.correctAnswer || 'N/A'}`,
+          `Similarity Score: ${qnaItem.similarityScore !== undefined ? `${qnaItem.similarityScore}%` : 'N/A'}`,
+          `Status: ${isCorrect(qnaItem) ? 'Correct' : 'Incorrect'}`,
+          '---------------',
+        ];
+        qnaText.forEach((text) => {
+          yPos = addText(text, leftMargin, yPos, 12);
+        });
+      });
+    } else {
+      yPos = addText('No questions found for this session.', leftMargin, yPos, 12);
+    }
+
+    // Save PDF
+    const fileName = `Session_${session.role || 'Unknown'}_${formatDate(session.createdAt).replace(/, /g, '_')}.pdf`;
+    doc.save(fileName);
   };
 
   if (loading) {
@@ -151,10 +225,13 @@ const SessionDetails = () => {
               <span className="label">Questions:</span>
               <span className="value">{totalQuestions}</span>
             </div>
-            <button className="back-btn" onClick={() => navigate('/history')}>
+          </div>
+           <button className="back-button" onClick={() => navigate('/history')}>
               Back to History
             </button>
-          </div>
+            <button className="download-btn" onClick={handleDownload}>
+              Download PDF
+            </button>
         </div>
 
         {totalQuestions > 0 && (

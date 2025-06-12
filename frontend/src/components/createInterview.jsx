@@ -1,31 +1,53 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './createInterview.css';
 
-const CreateInterview = ({ onClose, onCreate }) => {
-  const [formData, setFormData] = useState({
-    role: '',
-    experience: '',
-    jobType: 'Full Time',
-    mode: 'Written',
-  });
+const CreateInterview = ({ onClose, onCreate, isProfileBased, userProfile }) => {
+  const initialFormData = isProfileBased
+    ? {
+        role: userProfile?.careerGoals,
+        experience: userProfile?.experience || 0,
+        jobType: 'Full Time',
+        mode: 'One-to-One',
+        skills: userProfile?.skills || [],
+        resume: userProfile?.resume || ''
+      }
+    : {
+        role: '',
+        experience: '',
+        jobType: 'Full Time',
+        mode: 'Written'
+      };
+
+  const [formData, setFormData] = useState(initialFormData);
   const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleInputChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  useEffect(() => {
+    if (isProfileBased && !userProfile) {
+      setErrorMsg('Profile data is missing. Please complete your profile.');
+    }
+  }, [isProfileBased, userProfile]);
+
+  const handleChange = (e) => {
+    setErrorMsg('');
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg('');
     setLoading(true);
-
-    try {
-      await onCreate(formData);
+    if (isProfileBased && !userProfile) {
+      setErrorMsg('Cannot create profile-based interview without profile data.');
       setLoading(false);
-      setFormData({ role: '', experience: '', jobType: 'Full Time', mode: 'Written' });
-    } catch (err) {
-      setErrorMsg(err.message || 'Something went wrong');
+      return;
+    }
+    const result = await onCreate(formData);
+    if (result.success) {
+      setLoading(false);
+    } else {
+      setErrorMsg(result.error);
       setLoading(false);
     }
   };
@@ -33,7 +55,7 @@ const CreateInterview = ({ onClose, onCreate }) => {
   return (
     <div className="modal-backdrop">
       <div className="modal">
-        <h3>Create Interview</h3>
+        <h3>{isProfileBased ? 'Start Profile-Based Interview' : 'Create New Interview'}</h3>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="role">Job Role</label>
@@ -41,67 +63,78 @@ const CreateInterview = ({ onClose, onCreate }) => {
               type="text"
               id="role"
               name="role"
-              placeholder="Job Role"
               value={formData.role}
-              onChange={handleInputChange}
+              onChange={handleChange}
+              disabled={isProfileBased}
               required
             />
           </div>
-
           <div className="form-group">
-            <label htmlFor="experience">Experience (in years)</label>
+            <label htmlFor="experience">Experience (Years)</label>
             <input
               type="number"
               id="experience"
               name="experience"
-              placeholder="Experience (in years)"
               value={formData.experience}
-              onChange={handleInputChange}
+              onChange={handleChange}
+              disabled={isProfileBased}
               required
-              min="0"
             />
           </div>
-
           <div className="form-group">
             <label htmlFor="jobType">Job Type</label>
             <select
               id="jobType"
               name="jobType"
               value={formData.jobType}
-              onChange={handleInputChange}
+              onChange={handleChange}
+              required
             >
               <option value="Full Time">Full Time</option>
               <option value="Intern">Intern</option>
             </select>
           </div>
-
           <div className="form-group">
-            <label htmlFor="mode">Mode</label>
+            <label htmlFor="mode">Interview Mode</label>
             <select
               id="mode"
               name="mode"
               value={formData.mode}
-              onChange={handleInputChange}
+              onChange={handleChange}
+              disabled={isProfileBased}
+              required
             >
               <option value="Written">Written</option>
               <option value="One-to-One">One-to-One</option>
             </select>
           </div>
-
+          {isProfileBased && (
+            <>
+              <div className="form-group">
+                <label htmlFor="skills">Skills (comma-separated)</label>
+                <input
+                  type="text"
+                  id="skills"
+                  value={formData.skills.join(', ')}
+                  disabled
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="resume">Resume URL</label>
+                <input
+                  type="text"
+                  id="resume"
+                  name="resume"
+                  value={formData.resume}
+                  disabled
+                />
+              </div>
+            </>
+          )}
           {errorMsg && <div className="error-msg">{errorMsg}</div>}
-
           <div className="button-container">
-            <button type="submit" disabled={loading}>
-              {loading ? 'Creating...' : 'Create'}
-            </button>
-            <button
-              type="button"
-              className="cancel-btn"
-              onClick={onClose}
-              disabled={loading}
-            >
-              Cancel
-            </button>
+            <button type="button" className="cancel-btn" onClick={onClose} disabled={loading}>Cancel</button>
+            <button type="submit" disabled={loading}>{loading ? 'Creating...' : (isProfileBased ? 'Create and Start' : 'Create and Save')}</button>
           </div>
         </form>
       </div>

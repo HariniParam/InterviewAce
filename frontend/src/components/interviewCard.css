@@ -2,7 +2,7 @@
   background: #F1EFEC;
   border-radius: 16px;
   padding: 20px;
-  width: 200px;
+  width: 280px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -20,6 +20,20 @@
 @keyframes fadeIn {
   from { transform: scale(0.95); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.profile-badge {
+  background: #D4C9BE;
+  color: #030303;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-weight: bold;
 }
 
 .card-content {
@@ -49,6 +63,16 @@
 
 .card span strong {
   color: #123458;
+}
+
+.profile-badge.profile-based {
+  background-color: #4CAF50;
+  color: #F1EFEC;
+}
+
+.profile-badge.custom {
+  background-color: #0288D1;
+  color: #F1EFEC;
 }
 
 .button-container {

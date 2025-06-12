@@ -3,6 +3,7 @@ const Interview = require('../models/Interview');
 const InterviewSession = require('../models/InterviewSession');
 const OpenAI = require('openai');
 const axios = require('axios');
+const pdfParse = require('pdf-parse');
 const { writtenPrompt, oneToOneFollowUpPrompt, oneToOneInitialPrompt } = require('../prompts/interviewPrompt');
 
 // Initialize OpenAI client
@@ -22,23 +23,48 @@ const openai = new OpenAI({
 // Create a new interview
 const createInterview = async (req, res) => {
   try {
-    const { role, experience, jobType, mode } = req.body;
+    const { role, experience, jobType, mode, skills, resume, isProfileBased } = req.body;
     const userId = req.user.id;
+
+    if (!role || experience === undefined || !jobType || !mode) {
+      return res.status(400).json({ error: 'Role, experience, job type, and mode are required.' });
+    }
+
+    const isProfileBasedBool = Boolean(isProfileBased);
+    const existingInterview = await Interview.findOne({
+      role,
+      mode,
+      jobType,
+      user: userId,
+      isProfileBased: isProfileBasedBool
+    });
+    if (existingInterview) {
+      const errorMessage = isProfileBasedBool
+        ? 'A profile-based interview with this role, mode, and job type already exists for this user.'
+        : 'A non-profile-based interview with this role, mode, and job type already exists for this user.';
+      return res.status(400).json({ error: errorMessage });
+    }
+
     const interview = new Interview({
       role,
       experience,
       jobType,
       mode,
+      skills: skills || [],
+      resume: resume || '',
+      isProfileBased: isProfileBasedBool,
       user: userId
     });
 
     await interview.save();
     res.status(201).json(interview);
   } catch (err) {
+    console.error('Create interview error:', err);
     if (err.code === 11000) {
-      return res.status(400).json({ error: 'Interview for this role and mode already exists.' });
+      return res.status(400).json({error: 'interview with this role, mode, and job type already exists.'
+      });
     }
-    res.status(500).json({ error: 'Failed to create interview' });
+    res.status(500).json({ error: 'Failed to create interview', details: err.message });
   }
 };
 
@@ -215,7 +241,6 @@ const parseStructuredQA = (responseText, mode = 'Written', isFollowUp = false) =
       const optionsMatch = question.match(mcqOptionPattern);
       
       if (optionsMatch) {
-        console.log('Detected MCQ question');
         const correctAnswerMatch = answer.match(/Correct answer:\s*(.*?)(?:\nExplanation:|\s*$)/is);
         const explanationMatch = answer.match(/Explanation:\s*([\s\S]*)/is);
         
@@ -254,7 +279,32 @@ const parseStructuredQA = (responseText, mode = 'Written', isFollowUp = false) =
 
 // To generate questions or follow-up questions
 const generateQuestions = async (req, res) => {
-  const { jobRole, experience, jobType, mode, previousAnswer, previousQuestion } = req.body;
+  const { jobRole, experience, jobType, mode, skills, resume, isProfileBased, previousAnswer, previousQuestion } = req.body;
+
+  let resumeContent = '';
+  if (isProfileBased) {
+    try {
+      let pdfBuffer;
+      if (Buffer.isBuffer(resume)) {
+        pdfBuffer = resume;
+      } else if (typeof resume === 'string') {
+        const fs = require('fs').promises;
+        const path = require('path');
+        const resumePath = path.resolve(__dirname, '..', 'uploads', resume.replace(/^\/uploads\//, ''));
+        pdfBuffer = await fs.readFile(resumePath);
+      } else {
+        throw new Error('Invalid resume format');
+      }
+      const pdfData = await pdfParse(pdfBuffer);
+      resumeContent = pdfData.text.trim();
+      if (!resumeContent) {
+        throw new Error('No text extracted from resume');
+      }
+    } catch (pdfError) {
+      console.error('PDF parsing error:', pdfError.message);
+      return res.status(400).json({ error: 'Failed to parse resume PDF', details: pdfError.message });
+    }
+  }
 
   let prompt = '';
   let isFollowUp = false;
@@ -266,7 +316,11 @@ const generateQuestions = async (req, res) => {
       prompt = oneToOneFollowUpPrompt({ previousQuestion, previousAnswer });
       isFollowUp = true;
     } else {
-      prompt = oneToOneInitialPrompt({ jobRole, experience, jobType });
+      prompt = oneToOneInitialPrompt({ jobRole, experience, jobType, 
+        skills: skills || [], 
+        resume: resumeContent,
+        isProfileBased
+      });
     }
   } else {
     return res.status(400).json({ error: 'Invalid interview mode' });

@@ -314,9 +314,9 @@
   margin: 0;
 }
 
-.back-btn {
+.back-button, .download-btn {
   display: inline-block;
-  padding: 10px 20px;
+  padding: 0.5rem;
   border-radius: 8px;
   background-color: #D4C9BE;
   color: #030303;
@@ -327,7 +327,7 @@
   transition: all 0.3s ease;
 }
 
-.back-btn:hover {
+.back-button:hover, .download-btn:hover {
   background-color: #F1EFEC;
   transform: translateY(-2px);
 }
@@ -406,6 +406,7 @@
   .answers-section {
     height: 250px;
   }
+
 }
 
 @media (max-width: 480px) {
