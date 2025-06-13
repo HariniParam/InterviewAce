@@ -97,7 +97,7 @@ Create a .env file in the backend directory with the following:
 PORT=5000
 MONGO_URI=<your-mongodb-uri>
 JWT_SECRET=<your-jwt-secret>
-GROK_API_KEY=<your-grok-api-key>
+GROQ_API_KEY=<your-groq-api-key>
 HF_API_KEY=<your-huggingface-api-key>
 ```
 
